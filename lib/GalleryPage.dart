@@ -85,15 +85,21 @@ class _GalleryPageState extends State<GalleryPage> {
       body: GridView.builder(
         controller: _scrollController,
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: MediaQuery.of(context).size.width ~/ 200, // Adjust according to your preference
+          crossAxisCount: _calculateCrossAxisCount(context), // Adjust according to your preference
           crossAxisSpacing: 4,
           mainAxisSpacing: 4,
         ),
-        itemCount: _images.length,
+        itemCount: _images.length + 1, // Add 1 to account for loading indicator
         itemBuilder: (context, index) {
-          // if (index == _images.length - 1) {
-          //   _loadMoreImages();
-          // }
+          if (index == _images.length) {
+            // Display loading indicator
+            return _loading
+                ? Center(child: SizedBox(
+              height: 50,
+                width: 50,
+                child: CircularProgressIndicator()))
+                : Container();
+          }
           return GestureDetector(
             onTap: () {
               Navigator.push(
@@ -107,11 +113,17 @@ class _GalleryPageState extends State<GalleryPage> {
             child: Stack(
               alignment: Alignment.bottomCenter,
               children: [
-                CachedNetworkImage(
-                  imageUrl: _images[index]['previewURL'],
-                  placeholder: (context, url) => CircularProgressIndicator(),
-                  errorWidget: (context, url, error) => Icon(Icons.error),
-                  fit: BoxFit.cover,
+                AspectRatio(
+                  aspectRatio: 1, // Ensure each image is displayed as a square
+                  child: CachedNetworkImage(
+                    imageUrl: _images[index]['previewURL'],
+                    placeholder: (context, url) => SizedBox(
+                      height: 50,
+                        width: 50,
+                        child: CircularProgressIndicator()),
+                    errorWidget: (context, url, error) => Icon(Icons.error),
+                    fit: BoxFit.cover,
+                  ),
                 ),
                 Container(
                   color: Colors.black54,
@@ -136,5 +148,15 @@ class _GalleryPageState extends State<GalleryPage> {
         },
       ),
     );
+  }
+
+  // Calculate the cross axis count dynamically based on the screen size
+  int _calculateCrossAxisCount(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    // Adjust these values according to your preference
+    final itemWidth = 150.0;
+    final spacing = 4.0;
+    final crossAxisCount = (screenWidth / (itemWidth + spacing)).floor();
+    return crossAxisCount;
   }
 }
